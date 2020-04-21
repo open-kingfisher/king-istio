@@ -5,7 +5,7 @@ Kubernetes中的微服务治理模块
 ## 依赖
 
 - Golang: `Go >= 1.13`
-- Istio: `isito >= 3.5`
+- Istio: `isito >= 1.3.5`
 
 ## 说明
 
