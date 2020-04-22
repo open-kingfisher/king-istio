@@ -1,4 +1,6 @@
-## Kingfisher Istio
+# Kingfisher Istio
+[![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
+[![Go Report Card](https://goreportcard.com/badge/github.com/open-kingfisher/king-istio)](https://goreportcard.com/report/github.com/open-kingfisher/king-istio)
 
 Kubernetes中的微服务治理模块
 
