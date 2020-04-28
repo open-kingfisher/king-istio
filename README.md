@@ -11,8 +11,8 @@ Kubernetes中的微服务治理模块
 
 ## 说明
 
-- istio client-go 更新 
-    - 下载[https://github.com/istio/client-go/tree/master/pkg/apis](https://github.com/istio/client-go/tree/master/pkg/apis)到pkg目录下面，然后执行hack/code_generate.sh
+- istio client-go 使用
+    - 下载[https://github.com/istio/client-go](https://github.com/istio/client-go)
 
 ## Makefile的使用
 
