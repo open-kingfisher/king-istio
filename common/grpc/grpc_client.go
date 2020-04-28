@@ -3,12 +3,12 @@ package grpc
 import (
 	"context"
 	"encoding/json"
+	pb "github.com/open-kingfisher/king-k8s/grpc/proto"
+	"github.com/open-kingfisher/king-utils/common"
+	"github.com/open-kingfisher/king-utils/common/grpc"
+	"github.com/open-kingfisher/king-utils/common/log"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	"kingfisher/kf/common"
-	"kingfisher/kf/common/grpc"
-	"kingfisher/kf/common/log"
-	pb "kingfisher/king-k8s/grpc/proto"
 	"time"
 )
 
