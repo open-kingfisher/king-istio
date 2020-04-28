@@ -1,33 +1,35 @@
 package resource
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/open-kingfisher/king-istio/common/chart"
+	grpcClient "github.com/open-kingfisher/king-istio/common/grpc"
+	"github.com/open-kingfisher/king-k8s/util"
+	"github.com/open-kingfisher/king-utils/common"
+	"github.com/open-kingfisher/king-utils/common/handle"
+	"github.com/open-kingfisher/king-utils/common/log"
+	"github.com/open-kingfisher/king-utils/kit"
+	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"kingfisher/kf/common"
-	"kingfisher/kf/common/handle"
-	"kingfisher/kf/common/log"
-	"kingfisher/kf/kit"
-	"kingfisher/king-istio/common/chart"
-	grpcClient "kingfisher/king-istio/common/grpc"
-	"kingfisher/king-istio/pkg/apis/networking/v1alpha3"
-	networkingv1alpha3 "kingfisher/king-istio/pkg/client/clientset/versioned/typed/networking/v1alpha3"
-	"kingfisher/king-k8s/util"
 )
 
 type DestinationRulesResource struct {
 	Params   *handle.Resources
 	PostData *v1alpha3.DestinationRule
-	Access   *networkingv1alpha3.NetworkingV1alpha3Client
+	Access   versionedclient.Clientset
 }
 
 func (r *DestinationRulesResource) Get() (*v1alpha3.DestinationRule, error) {
-	i, err := r.Access.DestinationRules(r.Params.Namespace).Get(r.Params.Name, metav1.GetOptions{})
+	var ctx context.Context
+	i, err := r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Get(ctx, r.Params.Name, metav1.GetOptions{})
 	if err == nil {
 		i.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Kind: "DestinationRule", Version: "networking.istio.io/v1alpha3"})
 	}
@@ -35,11 +37,13 @@ func (r *DestinationRulesResource) Get() (*v1alpha3.DestinationRule, error) {
 }
 
 func (r *DestinationRulesResource) List() (*v1alpha3.DestinationRuleList, error) {
-	return r.Access.DestinationRules(r.Params.Namespace).List(metav1.ListOptions{})
+	var ctx context.Context
+	return r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).List(ctx, metav1.ListOptions{})
 }
 
 func (r *DestinationRulesResource) Delete() (err error) {
-	if err = r.Access.DestinationRules(r.Params.Namespace).Delete(r.Params.Name, &metav1.DeleteOptions{}); err != nil {
+	var ctx context.Context
+	if err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Delete(ctx, r.Params.Name, metav1.DeleteOptions{}); err != nil {
 		return
 	}
 	auditLog := handle.AuditLog{
@@ -55,11 +59,12 @@ func (r *DestinationRulesResource) Delete() (err error) {
 }
 
 func (r *DestinationRulesResource) Patch() (res *v1alpha3.DestinationRule, err error) {
+	var ctx context.Context
 	var data []byte
 	if data, err = json.Marshal(r.Params.PatchData.Patches); err != nil {
 		return
 	}
-	if res, err = r.Access.DestinationRules(r.Params.Namespace).Patch(r.Params.Name, types.JSONPatchType, data); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Patch(ctx, r.Params.Name, types.JSONPatchType, data, metav1.PatchOptions{}); err != nil {
 		log.Errorf("%s patch error:%s; Json:%+v; Name:%s", common.DestinationRules, err, string(data), r.Params.Name)
 		return
 	}
@@ -76,7 +81,8 @@ func (r *DestinationRulesResource) Patch() (res *v1alpha3.DestinationRule, err e
 }
 
 func (r *DestinationRulesResource) Update() (res *v1alpha3.DestinationRule, err error) {
-	if res, err = r.Access.DestinationRules(r.Params.Namespace).Update(r.PostData); err != nil {
+	var ctx context.Context
+	if res, err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Update(ctx, r.PostData, metav1.UpdateOptions{}); err != nil {
 		log.Errorf("%s update error:%s; Json:%+v; Name:%s", common.DestinationRules, err, r.PostData, r.PostData.Name)
 		return
 	}
@@ -95,7 +101,8 @@ func (r *DestinationRulesResource) Update() (res *v1alpha3.DestinationRule, err 
 }
 
 func (r *DestinationRulesResource) Create() (res *v1alpha3.DestinationRule, err error) {
-	if res, err = r.Access.DestinationRules(r.Params.Namespace).Create(r.PostData); err != nil {
+	var ctx context.Context
+	if res, err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Create(ctx, r.PostData, metav1.CreateOptions{}); err != nil {
 		log.Errorf("%s create error:%s; Json:%+v; Name:%s", common.DestinationRules, err, r.PostData, r.PostData.Name)
 		return
 	}
