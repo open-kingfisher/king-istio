@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/open-kingfisher/king-istio/common/chart"
 	grpcClient "github.com/open-kingfisher/king-istio/common/grpc"
-	"github.com/open-kingfisher/king-k8s/util"
+	"github.com/open-kingfisher/king-istio/util"
 	"github.com/open-kingfisher/king-utils/common"
 	"github.com/open-kingfisher/king-utils/common/handle"
 	"github.com/open-kingfisher/king-utils/common/log"
@@ -24,12 +24,11 @@ import (
 type DestinationRulesResource struct {
 	Params   *handle.Resources
 	PostData *v1alpha3.DestinationRule
-	Access   versionedclient.Clientset
+	Access   *versionedclient.Clientset
 }
 
 func (r *DestinationRulesResource) Get() (*v1alpha3.DestinationRule, error) {
-	var ctx context.Context
-	i, err := r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Get(ctx, r.Params.Name, metav1.GetOptions{})
+	i, err := r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Get(context.TODO(), r.Params.Name, metav1.GetOptions{})
 	if err == nil {
 		i.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Kind: "DestinationRule", Version: "networking.istio.io/v1alpha3"})
 	}
@@ -37,13 +36,11 @@ func (r *DestinationRulesResource) Get() (*v1alpha3.DestinationRule, error) {
 }
 
 func (r *DestinationRulesResource) List() (*v1alpha3.DestinationRuleList, error) {
-	var ctx context.Context
-	return r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).List(ctx, metav1.ListOptions{})
+	return r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).List(context.TODO(), metav1.ListOptions{})
 }
 
 func (r *DestinationRulesResource) Delete() (err error) {
-	var ctx context.Context
-	if err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Delete(ctx, r.Params.Name, metav1.DeleteOptions{}); err != nil {
+	if err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Delete(context.TODO(), r.Params.Name, metav1.DeleteOptions{}); err != nil {
 		return
 	}
 	auditLog := handle.AuditLog{
@@ -59,12 +56,11 @@ func (r *DestinationRulesResource) Delete() (err error) {
 }
 
 func (r *DestinationRulesResource) Patch() (res *v1alpha3.DestinationRule, err error) {
-	var ctx context.Context
 	var data []byte
 	if data, err = json.Marshal(r.Params.PatchData.Patches); err != nil {
 		return
 	}
-	if res, err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Patch(ctx, r.Params.Name, types.JSONPatchType, data, metav1.PatchOptions{}); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Patch(context.TODO(), r.Params.Name, types.JSONPatchType, data, metav1.PatchOptions{}); err != nil {
 		log.Errorf("%s patch error:%s; Json:%+v; Name:%s", common.DestinationRules, err, string(data), r.Params.Name)
 		return
 	}
@@ -81,8 +77,7 @@ func (r *DestinationRulesResource) Patch() (res *v1alpha3.DestinationRule, err e
 }
 
 func (r *DestinationRulesResource) Update() (res *v1alpha3.DestinationRule, err error) {
-	var ctx context.Context
-	if res, err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Update(ctx, r.PostData, metav1.UpdateOptions{}); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Update(context.TODO(), r.PostData, metav1.UpdateOptions{}); err != nil {
 		log.Errorf("%s update error:%s; Json:%+v; Name:%s", common.DestinationRules, err, r.PostData, r.PostData.Name)
 		return
 	}
@@ -101,8 +96,7 @@ func (r *DestinationRulesResource) Update() (res *v1alpha3.DestinationRule, err 
 }
 
 func (r *DestinationRulesResource) Create() (res *v1alpha3.DestinationRule, err error) {
-	var ctx context.Context
-	if res, err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Create(ctx, r.PostData, metav1.CreateOptions{}); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().DestinationRules(r.Params.Namespace).Create(context.TODO(), r.PostData, metav1.CreateOptions{}); err != nil {
 		log.Errorf("%s create error:%s; Json:%+v; Name:%s", common.DestinationRules, err, r.PostData, r.PostData.Name)
 		return
 	}

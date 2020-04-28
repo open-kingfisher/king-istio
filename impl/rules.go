@@ -3,10 +3,10 @@ package impl
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"kingfisher/kf/common"
-	"kingfisher/kf/common/handle"
-	"kingfisher/king-istio/common/access"
-	"kingfisher/king-istio/resource"
+	"github.com/open-kingfisher/king-istio/common/access"
+	"github.com/open-kingfisher/king-istio/resource"
+	"github.com/open-kingfisher/king-utils/common"
+	"github.com/open-kingfisher/king-utils/common/handle"
 )
 
 type rules struct{}
@@ -125,7 +125,7 @@ func (v *rules) Create() func(c *gin.Context) {
 
 func (v *rules) newResource(c *gin.Context) (*resource.RulesResource, error) {
 	// 获取clientSet，如果失败直接返回错误
-	clientSet, err := access.IstioConfigClient(c.Query("cluster"))
+	clientSet, err := access.IstioClient(c.Query("cluster"))
 	if err != nil {
 		return nil, err
 	}

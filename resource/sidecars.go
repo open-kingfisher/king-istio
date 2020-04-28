@@ -23,8 +23,7 @@ type SidecarsResource struct {
 }
 
 func (r *SidecarsResource) Get() (*v1alpha3.Sidecar, error) {
-	var ctx context.Context
-	i, err := r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).Get(ctx, r.Params.Name, metav1.GetOptions{})
+	i, err := r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).Get(context.TODO(), r.Params.Name, metav1.GetOptions{})
 	if err == nil {
 		i.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Kind: "Sidecar", Version: "networking.istio.io/v1alpha3"})
 	}
@@ -32,13 +31,11 @@ func (r *SidecarsResource) Get() (*v1alpha3.Sidecar, error) {
 }
 
 func (r *SidecarsResource) List() (*v1alpha3.SidecarList, error) {
-	var ctx context.Context
-	return r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).List(ctx, metav1.ListOptions{})
+	return r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).List(context.TODO(), metav1.ListOptions{})
 }
 
 func (r *SidecarsResource) Delete() (err error) {
-	var ctx context.Context
-	if err = r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).Delete(ctx, r.Params.Name, metav1.DeleteOptions{}); err != nil {
+	if err = r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).Delete(context.TODO(), r.Params.Name, metav1.DeleteOptions{}); err != nil {
 		return
 	}
 	auditLog := handle.AuditLog{
@@ -54,12 +51,11 @@ func (r *SidecarsResource) Delete() (err error) {
 }
 
 func (r *SidecarsResource) Patch() (res *v1alpha3.Sidecar, err error) {
-	var ctx context.Context
 	var data []byte
 	if data, err = json.Marshal(r.Params.PatchData.Patches); err != nil {
 		return
 	}
-	if res, err = r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).Patch(ctx, r.Params.Name, types.JSONPatchType, data, metav1.PatchOptions{}); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).Patch(context.TODO(), r.Params.Name, types.JSONPatchType, data, metav1.PatchOptions{}); err != nil {
 		log.Errorf("%s patch error:%s; Json:%+v; Name:%s", common.Sidecars, err, string(data), r.Params.Name)
 		return
 	}
@@ -76,8 +72,7 @@ func (r *SidecarsResource) Patch() (res *v1alpha3.Sidecar, err error) {
 }
 
 func (r *SidecarsResource) Update() (res *v1alpha3.Sidecar, err error) {
-	var ctx context.Context
-	if res, err = r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).Update(ctx, r.PostData, metav1.UpdateOptions{}); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).Update(context.TODO(), r.PostData, metav1.UpdateOptions{}); err != nil {
 		log.Errorf("%s update error:%s; Json:%+v; Name:%s", common.Sidecars, err, r.PostData, r.PostData.Name)
 		return
 	}
@@ -96,8 +91,7 @@ func (r *SidecarsResource) Update() (res *v1alpha3.Sidecar, err error) {
 }
 
 func (r *SidecarsResource) Create() (res *v1alpha3.Sidecar, err error) {
-	var ctx context.Context
-	if res, err = r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).Create(ctx, r.PostData, metav1.CreateOptions{}); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().Sidecars(r.Params.Namespace).Create(context.TODO(), r.PostData, metav1.CreateOptions{}); err != nil {
 		log.Errorf("%s create error:%s; Json:%+v; Name:%s", common.Sidecars, err, r.PostData, r.PostData.Name)
 		return
 	}

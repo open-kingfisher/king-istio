@@ -3,10 +3,10 @@ package impl
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"kingfisher/kf/common"
-	"kingfisher/kf/common/handle"
-	"kingfisher/king-istio/common/access"
-	"kingfisher/king-istio/resource"
+	"github.com/open-kingfisher/king-istio/common/access"
+	"github.com/open-kingfisher/king-istio/resource"
+	"github.com/open-kingfisher/king-utils/common"
+	"github.com/open-kingfisher/king-utils/common/handle"
 )
 
 type serviceEntries struct{}
@@ -125,7 +125,7 @@ func (v *serviceEntries) Create() func(c *gin.Context) {
 
 func (v *serviceEntries) newResource(c *gin.Context) (*resource.ServiceEntriesResource, error) {
 	// 获取clientSet，如果失败直接返回错误
-	clientSet, err := access.IstioNetworkingClient(c.Query("cluster"))
+	clientSet, err := access.IstioClient(c.Query("cluster"))
 	if err != nil {
 		return nil, err
 	}

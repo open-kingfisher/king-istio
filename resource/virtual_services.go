@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/open-kingfisher/king-istio/common/chart"
 	grpcClient "github.com/open-kingfisher/king-istio/common/grpc"
-	"github.com/open-kingfisher/king-k8s/util"
+	"github.com/open-kingfisher/king-istio/util"
 	"github.com/open-kingfisher/king-utils/common"
 	"github.com/open-kingfisher/king-utils/common/handle"
 	"github.com/open-kingfisher/king-utils/common/log"
@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"strings"
 )
 
 type VirtualServicesResource struct {
@@ -28,8 +29,7 @@ type VirtualServicesResource struct {
 }
 
 func (r *VirtualServicesResource) Get() (*v1alpha3.VirtualService, error) {
-	var ctx context.Context
-	i, err := r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Get(ctx, r.Params.Name, metav1.GetOptions{})
+	i, err := r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Get(context.TODO(), r.Params.Name, metav1.GetOptions{})
 	if err == nil {
 		i.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Kind: "VirtualService", Version: "networking.istio.io/v1alpha3"})
 	}
@@ -37,13 +37,11 @@ func (r *VirtualServicesResource) Get() (*v1alpha3.VirtualService, error) {
 }
 
 func (r *VirtualServicesResource) List() (*v1alpha3.VirtualServiceList, error) {
-	var ctx context.Context
-	return r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).List(ctx, metav1.ListOptions{})
+	return r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).List(context.TODO(), metav1.ListOptions{})
 }
 
 func (r *VirtualServicesResource) Delete() (err error) {
-	var ctx context.Context
-	if err = r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Delete(ctx, r.Params.Name, metav1.DeleteOptions{}); err != nil {
+	if err = r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Delete(context.TODO(), r.Params.Name, metav1.DeleteOptions{}); err != nil {
 		return
 	}
 	auditLog := handle.AuditLog{
@@ -59,12 +57,11 @@ func (r *VirtualServicesResource) Delete() (err error) {
 }
 
 func (r *VirtualServicesResource) Patch() (res *v1alpha3.VirtualService, err error) {
-	var ctx context.Context
 	var data []byte
 	if data, err = json.Marshal(r.Params.PatchData.Patches); err != nil {
 		return
 	}
-	if res, err = r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Patch(ctx, r.Params.Name, types.JSONPatchType, data, metav1.PatchOptions{}); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Patch(context.TODO(), r.Params.Name, types.JSONPatchType, data, metav1.PatchOptions{}); err != nil {
 		log.Errorf("%s patch error:%s; Json:%+v; Name:%s", common.VirtualServices, err, string(data), r.Params.Name)
 		return
 	}
@@ -81,9 +78,8 @@ func (r *VirtualServicesResource) Patch() (res *v1alpha3.VirtualService, err err
 }
 
 func (r *VirtualServicesResource) Update() (res *v1alpha3.VirtualService, err error) {
-	var ctx context.Context
 	if r.Params.PostType == "form" {
-		if vs, err := r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Get(ctx, r.PostData.Name, metav1.GetOptions{}); err != nil {
+		if vs, err := r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Get(context.TODO(), r.PostData.Name, metav1.GetOptions{}); err != nil {
 			log.Errorf("%s get error:%s; Json:%+v; Name:%s", common.VirtualServices, err, r.PostData, r.PostData.Name)
 			return nil, err
 		} else {
@@ -92,7 +88,7 @@ func (r *VirtualServicesResource) Update() (res *v1alpha3.VirtualService, err er
 			r.PostData.Spec.ExportTo = vs.Spec.ExportTo
 		}
 	}
-	if res, err = r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Update(ctx, r.PostData, metav1.UpdateOptions{}); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Update(context.TODO(), r.PostData, metav1.UpdateOptions{}); err != nil {
 		log.Errorf("%s update error:%s; Json:%+v; Name:%s", common.VirtualServices, err, r.PostData, r.PostData.Name)
 		return
 	}
@@ -111,8 +107,7 @@ func (r *VirtualServicesResource) Update() (res *v1alpha3.VirtualService, err er
 }
 
 func (r *VirtualServicesResource) Create() (res *v1alpha3.VirtualService, err error) {
-	var ctx context.Context
-	if res, err = r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Create(ctx, r.PostData, metav1.CreateOptions{}); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().VirtualServices(r.Params.Namespace).Create(context.TODO(), r.PostData, metav1.CreateOptions{}); err != nil {
 		log.Errorf("%s create error:%s; Json:%+v; Name:%s", common.VirtualServices, err, r.PostData, r.PostData.Name)
 		return
 	}
@@ -148,7 +143,7 @@ func (r *VirtualServicesResource) Chart() (interface{}, error) {
 				destination.Rank = "destination"
 				dr := DestinationRulesResource{
 					Params: r.Params,
-					Access: *r.Access,
+					Access: r.Access,
 				}
 				drs, _ := dr.List()
 				for _, d := range drs.Items {
@@ -217,4 +212,13 @@ func (r *VirtualServicesResource) GenerateCreateData(c *gin.Context) (err error)
 		return errors.New(common.ContentTypeError)
 	}
 	return nil
+}
+
+// k8s-app=nginx,app=nginx01 多标签查询
+func GenerateLabelSelector(selector map[string]string) string {
+	var labelSelector string
+	for k, v := range selector {
+		labelSelector += k + "=" + v + ","
+	}
+	return strings.TrimRight(labelSelector, ",")
 }

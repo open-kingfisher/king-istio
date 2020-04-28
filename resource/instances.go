@@ -1,28 +1,29 @@
 package resource
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/open-kingfisher/king-utils/common"
+	"github.com/open-kingfisher/king-utils/common/handle"
+	"github.com/open-kingfisher/king-utils/common/log"
+	"github.com/open-kingfisher/king-utils/kit"
+	"istio.io/client-go/pkg/apis/config/v1alpha2"
+	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"kingfisher/kf/common"
-	"kingfisher/kf/common/handle"
-	"kingfisher/kf/common/log"
-	"kingfisher/kf/kit"
-	"kingfisher/king-istio/pkg/apis/config/v1alpha2"
-	configv1alpha2 "kingfisher/king-istio/pkg/client/clientset/versioned/typed/config/v1alpha2"
 )
 
 type InstancesResource struct {
 	Params   *handle.Resources
 	PostData *v1alpha2.Instance
-	Access   *configv1alpha2.ConfigV1alpha2Client
+	Access   *versionedclient.Clientset
 }
 
 func (r *InstancesResource) Get() (*v1alpha2.Instance, error) {
-	i, err := r.Access.Instances(r.Params.Namespace).Get(r.Params.Name, metav1.GetOptions{})
+	i, err := r.Access.ConfigV1alpha2().Instances(r.Params.Namespace).Get(context.TODO(), r.Params.Name, metav1.GetOptions{})
 	if err == nil {
 		i.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Kind: "Rule", Version: "networking.istio.io/v1alpha3"})
 	}
@@ -30,11 +31,11 @@ func (r *InstancesResource) Get() (*v1alpha2.Instance, error) {
 }
 
 func (r *InstancesResource) List() (*v1alpha2.InstanceList, error) {
-	return r.Access.Instances(r.Params.Namespace).List(metav1.ListOptions{})
+	return r.Access.ConfigV1alpha2().Instances(r.Params.Namespace).List(context.TODO(), metav1.ListOptions{})
 }
 
 func (r *InstancesResource) Delete() (err error) {
-	if err = r.Access.Instances(r.Params.Namespace).Delete(r.Params.Name, &metav1.DeleteOptions{}); err != nil {
+	if err = r.Access.ConfigV1alpha2().Instances(r.Params.Namespace).Delete(context.TODO(), r.Params.Name, metav1.DeleteOptions{}); err != nil {
 		return
 	}
 	auditLog := handle.AuditLog{
@@ -54,7 +55,7 @@ func (r *InstancesResource) Patch() (res *v1alpha2.Instance, err error) {
 	if data, err = json.Marshal(r.Params.PatchData.Patches); err != nil {
 		return
 	}
-	if res, err = r.Access.Instances(r.Params.Namespace).Patch(r.Params.Name, types.JSONPatchType, data); err != nil {
+	if res, err = r.Access.ConfigV1alpha2().Instances(r.Params.Namespace).Patch(context.TODO(), r.Params.Name, types.JSONPatchType, data, metav1.PatchOptions{}); err != nil {
 		log.Errorf("%s patch error:%s; Json:%+v; Name:%s", common.Instances, err, string(data), r.Params.Name)
 		return
 	}
@@ -71,7 +72,7 @@ func (r *InstancesResource) Patch() (res *v1alpha2.Instance, err error) {
 }
 
 func (r *InstancesResource) Update() (res *v1alpha2.Instance, err error) {
-	if res, err = r.Access.Instances(r.Params.Namespace).Update(r.PostData); err != nil {
+	if res, err = r.Access.ConfigV1alpha2().Instances(r.Params.Namespace).Update(context.TODO(), r.PostData, metav1.UpdateOptions{}); err != nil {
 		log.Errorf("%s update error:%s; Json:%+v; Name:%s", common.Instances, err, r.PostData, r.PostData.Name)
 		return
 	}
@@ -90,7 +91,7 @@ func (r *InstancesResource) Update() (res *v1alpha2.Instance, err error) {
 }
 
 func (r *InstancesResource) Create() (res *v1alpha2.Instance, err error) {
-	if res, err = r.Access.Instances(r.Params.Namespace).Create(r.PostData); err != nil {
+	if res, err = r.Access.ConfigV1alpha2().Instances(r.Params.Namespace).Create(context.TODO(), r.PostData, metav1.CreateOptions{}); err != nil {
 		log.Errorf("%s create error:%s; Json:%+v; Name:%s", common.Instances, err, r.PostData, r.PostData.Name)
 		return
 	}

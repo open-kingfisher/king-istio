@@ -1,28 +1,29 @@
 package resource
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/open-kingfisher/king-utils/common"
+	"github.com/open-kingfisher/king-utils/common/handle"
+	"github.com/open-kingfisher/king-utils/common/log"
+	"github.com/open-kingfisher/king-utils/kit"
+	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"kingfisher/kf/common"
-	"kingfisher/kf/common/handle"
-	"kingfisher/kf/common/log"
-	"kingfisher/kf/kit"
-	"kingfisher/king-istio/pkg/apis/networking/v1alpha3"
-	networkingv1alpha3 "kingfisher/king-istio/pkg/client/clientset/versioned/typed/networking/v1alpha3"
 )
 
 type ServiceEntriesResource struct {
 	Params   *handle.Resources
 	PostData *v1alpha3.ServiceEntry
-	Access   *networkingv1alpha3.NetworkingV1alpha3Client
+	Access   *versionedclient.Clientset
 }
 
 func (r *ServiceEntriesResource) Get() (*v1alpha3.ServiceEntry, error) {
-	i, err := r.Access.ServiceEntries(r.Params.Namespace).Get(r.Params.Name, metav1.GetOptions{})
+	i, err := r.Access.NetworkingV1alpha3().ServiceEntries(r.Params.Namespace).Get(context.TODO(), r.Params.Name, metav1.GetOptions{})
 	if err == nil {
 		i.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Kind: "ServiceEntry", Version: "networking.istio.io/v1alpha3"})
 	}
@@ -30,11 +31,11 @@ func (r *ServiceEntriesResource) Get() (*v1alpha3.ServiceEntry, error) {
 }
 
 func (r *ServiceEntriesResource) List() (*v1alpha3.ServiceEntryList, error) {
-	return r.Access.ServiceEntries(r.Params.Namespace).List(metav1.ListOptions{})
+	return r.Access.NetworkingV1alpha3().ServiceEntries(r.Params.Namespace).List(context.TODO(), metav1.ListOptions{})
 }
 
 func (r *ServiceEntriesResource) Delete() (err error) {
-	if err = r.Access.ServiceEntries(r.Params.Namespace).Delete(r.Params.Name, &metav1.DeleteOptions{}); err != nil {
+	if err = r.Access.NetworkingV1alpha3().ServiceEntries(r.Params.Namespace).Delete(context.TODO(), r.Params.Name, metav1.DeleteOptions{}); err != nil {
 		return
 	}
 	auditLog := handle.AuditLog{
@@ -54,7 +55,7 @@ func (r *ServiceEntriesResource) Patch() (res *v1alpha3.ServiceEntry, err error)
 	if data, err = json.Marshal(r.Params.PatchData.Patches); err != nil {
 		return
 	}
-	if res, err = r.Access.ServiceEntries(r.Params.Namespace).Patch(r.Params.Name, types.JSONPatchType, data); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().ServiceEntries(r.Params.Namespace).Patch(context.TODO(), r.Params.Name, types.JSONPatchType, data, metav1.PatchOptions{}); err != nil {
 		log.Errorf("%s patch error:%s; Json:%+v; Name:%s", common.ServiceEntries, err, string(data), r.Params.Name)
 		return
 	}
@@ -72,7 +73,7 @@ func (r *ServiceEntriesResource) Patch() (res *v1alpha3.ServiceEntry, err error)
 
 func (r *ServiceEntriesResource) Update() (res *v1alpha3.ServiceEntry, err error) {
 	if r.Params.PostType == "form" {
-		if se, err := r.Access.ServiceEntries(r.Params.Namespace).Get(r.PostData.Name, metav1.GetOptions{}); err != nil {
+		if se, err := r.Access.NetworkingV1alpha3().ServiceEntries(r.Params.Namespace).Get(context.TODO(), r.PostData.Name, metav1.GetOptions{}); err != nil {
 			log.Errorf("%s get error:%s; Json:%+v; Name:%s", common.ServiceEntries, err, r.PostData, r.PostData.Name)
 			return nil, err
 		} else {
@@ -80,7 +81,7 @@ func (r *ServiceEntriesResource) Update() (res *v1alpha3.ServiceEntry, err error
 			r.PostData.Spec.SubjectAltNames = se.Spec.SubjectAltNames
 		}
 	}
-	if res, err = r.Access.ServiceEntries(r.Params.Namespace).Update(r.PostData); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().ServiceEntries(r.Params.Namespace).Update(context.TODO(), r.PostData, metav1.UpdateOptions{}); err != nil {
 		log.Errorf("%s update error:%s; Json:%+v; Name:%s", common.ServiceEntries, err, r.PostData, r.PostData.Name)
 		return
 	}
@@ -99,7 +100,7 @@ func (r *ServiceEntriesResource) Update() (res *v1alpha3.ServiceEntry, err error
 }
 
 func (r *ServiceEntriesResource) Create() (res *v1alpha3.ServiceEntry, err error) {
-	if res, err = r.Access.ServiceEntries(r.Params.Namespace).Create(r.PostData); err != nil {
+	if res, err = r.Access.NetworkingV1alpha3().ServiceEntries(r.Params.Namespace).Create(context.TODO(), r.PostData, metav1.CreateOptions{}); err != nil {
 		log.Errorf("%s create error:%s; Json:%+v; Name:%s", common.ServiceEntries, err, r.PostData, r.PostData.Name)
 		return
 	}
